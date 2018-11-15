@@ -5,9 +5,11 @@ import boto3
 
 
 def basicAuth(event, context):
+
     # if a basic auth header is set, use that to find the correct user/token
-    if 'Authorization' in event['headers']:
-        authorizationHeader = event['headers']['Authorization']
+    if 'Authorization' in event['headers'] or 'authorization' in event['headers']:
+
+        authorizationHeader = event['headers']['Authorization'] if 'Authorization' in event['headers'] else event['headers']['authorization']
         b64_token = authorizationHeader.split(' ')[-1]
 
         # decode the base64 encoded header value
@@ -20,12 +22,12 @@ def basicAuth(event, context):
         # if no keys found, deny access
         if len(response['items']) != 1:
             print("Couldn't find key")
-            raise Exception('Unauthorized!')
+            raise Exception('Unauthorized')
 
         # if the key value does not match, deny access
         if response['items'][0]['value'] != token:
             print("Key value mismatch")
-            raise Exception('Unauthorized!!')
+            raise Exception('Unauthorized')
 
     # check if an x-api-token header is set, if so, take it as-is, api gateway
     # will check the validity
@@ -35,8 +37,7 @@ def basicAuth(event, context):
 
     # no authentication headers found, deny
     else:
-        print("No authentication header found")
-        raise Exception('Please provide authentication details')
+        raise Exception('Unauthorized')
 
     # Return a policy which allows this user to access to this api
     # this call is cached for all authenticated calls, so we need to give
